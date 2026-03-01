@@ -15,6 +15,7 @@ local window = library:AddWindow("Invincible Free", {
     can_resize = false,
     background_transparency = 1,
 })
+
 -- Globals & states
 getgenv().NexusRunning = true
 
@@ -381,6 +382,18 @@ RebirthFolder:AddSwitch("Auto Rebirth to Target", function(s)
     end
 end)
 
+-- Fix for "Appreciate Invincible" switch
+CreditsTab:AddSwitch("Appreciate Invincible", function(s)
+    -- Add your code here to handle the toggle, for example:
+    if s then
+        print("Invincible Mode Enabled")
+        -- Your code to enable invincibility
+    else
+        print("Invincible Mode Disabled")
+        -- Your code to disable invincibility
+    end
+end)
+
 -- Utility functions
 local function formatNumber(number)
     local formatted = tostring(math.floor(number))
@@ -402,5 +415,3 @@ end
 
 -- Final notes
 print("Invincibles Priv Script – fixed & organized (Feb 2026)")
-
-CreditsTab:AddSwitch("Appreciate Invincible",
