@@ -382,13 +382,5 @@ RebirthFolder:AddSwitch("Auto Rebirth to Target", function(s)
     end
 end)
 
--- Add the switch to the Credits tab
 CreditsTab:AddSwitch("Appreciate Invincible", function(s)
-    if s then
-        print("Invincible Mode Enabled")
-        -- Your code to enable invincibility
-    else
-        print("Invincible Mode Disabled")
-        -- Your code to disable invincibility
-    end
 end)
