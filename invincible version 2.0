@@ -402,3 +402,5 @@ end
 
 -- Final notes
 print("Invincibles Priv Script – fixed & organized (Feb 2026)")
+
+CreditsTab:AddSwitch("Appreciate Invincible",
