@@ -1,26 +1,3 @@
--- Invincible Paid – Fluent UI version (March 2026)
-
-local whitelistedUsers = {
-    "hebdjxhc",
-    "krxzy_214",
-    "alexglover020",
-}
-
-local Players          = game:GetService("Players")
-local LocalPlayer      = Players.LocalPlayer
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local UserInputService = game:GetService("UserInputService")
-local RunService       = game:GetService("RunService")
-local Lighting         = game:GetService("Lighting")
-local VirtualUser      = game:GetService("VirtualUser")
-local Workspace        = game:GetService("Workspace")
-
--- Whitelist check
-if not table.find(whitelistedUsers, LocalPlayer.Name) then
-    LocalPlayer:Kick("not whitelisted L bozo dont steal my shit")
-    return
-end
-
 -- Load Fluent (official release – most stable in 2026)
 local Fluent = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/releases/latest/download/main.lua"))()
 
