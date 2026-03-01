@@ -6,20 +6,20 @@ local Window = Fluent:CreateWindow({
     SubTitle = "Muscle / Strength GUI",
     TabWidth = 160,
     Size = UDim2.fromOffset(580, 460),
-    Acrylic = true,    -- The blur may be detectable in some games, turn off if needed
+    Acrylic = true,
     Theme = "Dark",
-    MinimizeKey = Enum.KeyCode.LeftControl -- or RightControl
+    MinimizeKey = Enum.KeyCode.LeftControl
 })
 
 -- Create tabs
-local MainTab       = Window:AddTab({ Title = "Main", Icon = " Dumbbell" }) -- you can use Lucide icons if supported
+local MainTab       = Window:AddTab({ Title = "Main", Icon = "Dumbbell" })
 local RebirthTab    = Window:AddTab({ Title = "Rebirth" })
 local TeleportTab   = Window:AddTab({ Title = "Teleport" })
 local KillTab       = Window:AddTab({ Title = "Kill" })
 local MiscTab       = Window:AddTab({ Title = "Misc" })
 local CreditsTab    = Window:AddTab({ Title = "Credits" })
 
--- Globals & states (same as before)
+-- Globals & states
 getgenv().NexusRunning = true
 
 local states = {
@@ -39,12 +39,19 @@ local states = {
 local targetRebirths = 1
 local selectedTarget = nil
 
-getgenv().rockFarmActive = false
-getgenv().selectedRockDurability = 0
+local getgenv = getgenv -- ensure getgenv is accessible
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local UserInputService = game:GetService("UserInputService")
+local VirtualUser = game:GetService("VirtualUser")
+local RunService = game:GetService("RunService")
+local Lighting = game:GetService("Lighting")
+local Workspace = game:GetService("Workspace")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
-local muscleEvent = ReplicatedStorage:WaitForChild("muscleEvent", 5) -- adjust name if different
+local muscleEvent = ReplicatedStorage:WaitForChild("muscleEvent", 5)
 
--- Helpers (unchanged logic)
+-- Helpers
 local function tpTo(pos)
     pcall(function()
         local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
@@ -58,10 +65,8 @@ local function startAutoRep(toolName, stateKey)
             pcall(function()
                 local char = LocalPlayer.Character
                 if not char or not char:FindFirstChild("Humanoid") or char.Humanoid.Health <= 0 then task.wait(1.5) return end
-
                 local tool = LocalPlayer.Backpack:FindFirstChild(toolName) or char:FindFirstChild(toolName)
                 if tool and tool.Parent ~= char then char.Humanoid:EquipTool(tool) end
-
                 if muscleEvent then muscleEvent:FireServer("rep") end
             end)
             task.wait(0.08)
@@ -69,7 +74,9 @@ local function startAutoRep(toolName, stateKey)
         -- unequip
         pcall(function()
             local char = LocalPlayer.Character
-            if char and char:FindFirstChild(toolName) then char[toolName].Parent = LocalPlayer.Backpack end
+            if char and char:FindFirstChild(toolName) then
+                char[toolName].Parent = LocalPlayer.Backpack
+            end
         end)
     end)
 end
@@ -139,10 +146,7 @@ local function killPlayer(target)
     end)
 end
 
--- ────────────────────────────────────────────────────────────────
 -- MAIN TAB
--- ────────────────────────────────────────────────────────────────
-
 local ToolsSection = MainTab:AddSection("Tools")
 
 ToolsSection:AddToggle("AutoPushups", {
@@ -188,7 +192,9 @@ ToolsSection:AddToggle("FastPunch", {
                         local char = LocalPlayer.Character
                         if char then
                             local punch = char:FindFirstChild("Punch") or LocalPlayer.Backpack:FindFirstChild("Punch")
-                            if punch and punch.Parent ~= char then char.Humanoid:EquipTool(punch) end
+                            if punch and punch.Parent ~= char then
+                                char.Humanoid:EquipTool(punch)
+                            end
                             if punch and punch.Parent == char then
                                 local atk = punch:FindFirstChild("attackTime")
                                 if atk and atk:IsA("NumberValue") then atk.Value = 0.01 end
@@ -295,7 +301,6 @@ RockSection:AddButton({
     end
 })
 
--- Rock farm loop (unchanged)
 task.spawn(function()
     while getgenv().NexusRunning do
         if not getgenv().rockFarmActive or getgenv().selectedRockDurability <= 0 then task.wait(0.6) continue end
@@ -317,10 +322,14 @@ task.spawn(function()
                     if rock and rock:IsA("BasePart") then
                         touched = true
                         if char:FindFirstChild("RightHand") then
-                            firetouchinterest(rock, char.RightHand, 0) task.wait(0.025) firetouchinterest(rock, char.RightHand, 1)
+                            firetouchinterest(rock, char.RightHand, 0)
+                            task.wait(0.025)
+                            firetouchinterest(rock, char.RightHand, 1)
                         end
                         if char:FindFirstChild("LeftHand") then
-                            firetouchinterest(rock, char.LeftHand, 0) task.wait(0.025) firetouchinterest(rock, char.LeftHand, 1)
+                            firetouchinterest(rock, char.LeftHand, 0)
+                            task.wait(0.025)
+                            firetouchinterest(rock, char.LeftHand, 1)
                         end
                     end
                 end
@@ -334,10 +343,7 @@ task.spawn(function()
     end
 end)
 
--- ────────────────────────────────────────────────────────────────
 -- KILL TAB
--- ────────────────────────────────────────────────────────────────
-
 local KillSection = KillTab:AddSection("Auto Kill")
 
 KillSection:AddToggle("KillAura", {
@@ -348,7 +354,7 @@ KillSection:AddToggle("KillAura", {
         if v then
             task.spawn(function()
                 while states.KillAura and getgenv().NexusRunning do
-                    for _, plr in Players:GetPlayers() do
+                    for _, plr in pairs(Players:GetPlayers()) do
                         if plr ~= LocalPlayer then killPlayer(plr) end
                     end
                     task.wait(0.12)
@@ -370,8 +376,8 @@ local TargetDropdown = KillTab:AddDropdown("TargetPlayer", {
 
 local function refreshDropdown()
     local list = {}
-    for _, plr in Players:GetPlayers() do
-        if plr ~= LocalPlayer and plr.Name then
+    for _, plr in pairs(Players:GetPlayers()) do
+        if plr ~= LocalPlayer then
             table.insert(list, plr.Name)
         end
     end
@@ -400,25 +406,22 @@ KillSection:AddToggle("AutoKillSelected", {
     end
 })
 
--- ────────────────────────────────────────────────────────────────
 -- TELEPORT TAB
--- ────────────────────────────────────────────────────────────────
-
 local TPSection = TeleportTab:AddSection("Teleport Locations")
 
 local tpList = {
-    {"Spawn / Safe Area",     Vector3.new(-6,    5,   -196)},
-    {"Secret Area",           Vector3.new(1947,  2,   6191)},
-    {"Tiny Area",             Vector3.new(-39,   6,   1886)},
-    {"Frozen Area",           Vector3.new(-2623, 6,   -409)},
-    {"Mythical Area",         Vector3.new(2251,  6,   1073)},
-    {"Inferno Area",          Vector3.new(-6759, 6,   -1285)},
-    {"Legend Area",           Vector3.new(4603,  990, -3898)},
-    {"Muscle King Area",      Vector3.new(-8626, 16,  -5730)},
-    {"Jungle Area",           Vector3.new(-8642, 6,   2381)},
-    {"Lava Brawl",            Vector3.new(4471,  119, -8836)},
-    {"Desert Brawl",          Vector3.new(960,   17,  -7398)},
-    {"Beach Brawl",           Vector3.new(-1849, 20,  -6335)},
+    {"Spawn / Safe Area",     Vector3.new(-6, 5, -196)},
+    {"Secret Area",           Vector3.new(1947, 2, 6191)},
+    {"Tiny Area",             Vector3.new(-39, 6, 1886)},
+    {"Frozen Area",           Vector3.new(-2623, 6, -409)},
+    {"Mythical Area",         Vector3.new(2251, 6, 1073)},
+    {"Inferno Area",          Vector3.new(-6759, 6, -1285)},
+    {"Legend Area",           Vector3.new(4603, 990, -3898)},
+    {"Muscle King Area",      Vector3.new(-8626, 16, -5730)},
+    {"Jungle Area",           Vector3.new(-8642, 6, 2381)},
+    {"Lava Brawl",            Vector3.new(4471, 119, -8836)},
+    {"Desert Brawl",          Vector3.new(960, 17, -7398)},
+    {"Beach Brawl",           Vector3.new(-1849, 20, -6335)},
 }
 
 for _, data in ipairs(tpList) do
@@ -428,10 +431,7 @@ for _, data in ipairs(tpList) do
     })
 end
 
--- ────────────────────────────────────────────────────────────────
 -- REBIRTH TAB
--- ────────────────────────────────────────────────────────────────
-
 local RebirthSection = RebirthTab:AddSection("Rebirth Controls")
 
 RebirthSection:AddToggle("AutoRebirth", {
@@ -493,10 +493,7 @@ RebirthSection:AddToggle("AutoRebirthTarget", {
     end
 })
 
--- ────────────────────────────────────────────────────────────────
 -- CREDITS / MISC
--- ────────────────────────────────────────────────────────────────
-
 CreditsTab:AddParagraph({
     Title = "Credits",
     Content = "Original script: Invincible Paid\n"
@@ -518,5 +515,3 @@ Fluent:Notify({
     Content = "Invincible Paid • Fluent UI | Press LeftCtrl to toggle",
     Duration = 6
 })
-
-print("Invincible Paid – Fluent UI loaded")
