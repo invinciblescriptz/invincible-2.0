@@ -382,9 +382,8 @@ RebirthFolder:AddSwitch("Auto Rebirth to Target", function(s)
     end
 end)
 
--- Fix for "Appreciate Invincible" switch
+-- Add the switch to the Credits tab
 CreditsTab:AddSwitch("Appreciate Invincible", function(s)
-    -- Add your code here to handle the toggle, for example:
     if s then
         print("Invincible Mode Enabled")
         -- Your code to enable invincibility
@@ -393,25 +392,3 @@ CreditsTab:AddSwitch("Appreciate Invincible", function(s)
         -- Your code to disable invincibility
     end
 end)
-
--- Utility functions
-local function formatNumber(number)
-    local formatted = tostring(math.floor(number))
-    while true do
-        local newFormatted, k = string.gsub(formatted, "^(-?%d+)(%d%d%d)", "%1,%2")
-        if k == 0 then break end
-        formatted = newFormatted
-    end
-    return formatted
-end
-
-local function formatTime(seconds)
-    local days = math.floor(seconds / 86400)
-    local hours = math.floor((seconds % 86400) / 3600)
-    local minutes = math.floor((seconds % 3600) / 60)
-    local secs = seconds % 60
-    return string.format("%dd %dh %dm %ds", days, hours, minutes, secs)
-end
-
--- Final notes
-print("Invincibles Priv Script – fixed & organized (Feb 2026)")
