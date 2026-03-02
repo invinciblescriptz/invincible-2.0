@@ -382,5 +382,6 @@ RebirthFolder:AddSwitch("Auto Rebirth to Target", function(s)
     end
 end)
 
-CreditsTab:AddButton("Appreciate Invincible,
+CreditsTab:AddButton("Appreciate Invincible", function()
+    -- This function intentionally does nothing
 end)
