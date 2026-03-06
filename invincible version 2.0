@@ -52,8 +52,9 @@ local function collectOrbs()
 end
 
 local function teleportTo(position)
-    if game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
-        game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(position)
+    local player = game.Players.LocalPlayer
+    if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+        player.Character.HumanoidRootPart.CFrame = CFrame.new(position)
     end
 end
 
@@ -83,7 +84,10 @@ end
 local function infiniteJumpFunc()
     game:GetService("UserInputService").JumpRequest:Connect(function()
         if infiniteJump then
-            game.Players.LocalPlayer.Character.Humanoid:ChangeState("Jump")
+            local humanoid = game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
+            if humanoid then
+                humanoid:ChangeState("Jump")
+            end
         end
     end)
 end
@@ -358,7 +362,7 @@ local autoResetRejoinToggle = Misc:CreateToggle({
     end,
 })
 
--- Infinite Jump
+-- Initialize Infinite Jump
 infiniteJumpFunc()
 
 Rayfield:LoadConfiguration()
