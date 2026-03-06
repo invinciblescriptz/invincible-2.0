@@ -1,368 +1,215 @@
 local Rayfield = loadstring(game:HttpGet('https://raw.githubusercontent.com/shlexware/Rayfield/main/source'))()
 local Window = Rayfield:CreateWindow({
-    Name = "Muscle Legends Mega Script",
+    Name = "Muscle Legends Utility 2026",
     LoadingTitle = "Loading...",
-    LoadingSubtitle = "All-in-One Automation & Utility",
-    ConfigurationSaving = true,
-    ConfigurationFolder = "MuscleLegendsMega",
+    LoadingSubtitle = "Better safe than banned",
+    ConfigurationSaving = {
+        Enabled = true,
+        FolderName = "MuscleLegendsUtility",
+        FileName = "Config"
+    }
 })
+
+-- Services
+local RS = game:GetService("ReplicatedStorage")
+local Players = game:GetService("Players")
+local UIS = game:GetService("UserInputService")
+local plr = Players.LocalPlayer
 
 -- Variables
-local autoTrainStats = false
+local autoTrain = false
 local autoRebirth = false
-local autoBuyUpgrades = false
-local autoBoost = false
 local autoSell = false
-local autoCollectOrbs = false
 local infiniteJump = false
-local autoEquipBest = false
-local autoOpenEggs = false
-local autoClaimDaily = false
-local autoJoinServer = false
-local autoUpgradeAll = false
-local maxUpgradeLevel = 10
+local walkSpeed = 16
+local jumpPower = 50
+local antiAFK = false
+
+-- Remote paths (MUST VERIFY THESE YOURSELF - most likely wrong in 2026)
+-- Common ones from older/recent scripts:
+local remotes = {
+    Train = RS:FindFirstChild("Events") and RS.Events:FindFirstChild("Train") 
+        or RS:FindFirstChild("TrainStat") 
+        or RS:FindFirstChild("TrainEvent"),  -- placeholder - update!
+    
+    Rebirth = RS:FindFirstChild("Rebirth") 
+        or RS.Events:FindFirstChild("Rebirth"),
+    
+    Sell = RS:FindFirstChild("Sell") 
+        or RS.Events:FindFirstChild("SellAll"),
+    
+    -- Add more if you find them (e.g. ClaimChest, OpenEggType, etc.)
+}
 
 -- Functions
-local function trainStat(stat)
-    game:GetService("ReplicatedStorage").Events.TrainStat:FireServer(stat)
+local function safeFire(remote, ...)
+    if remote and remote:IsA("RemoteEvent") then
+        pcall(function()
+            remote:FireServer(...)
+        end)
+    end
 end
 
-local function rebirth()
-    game:GetService("ReplicatedStorage").Events.Rebirth:FireServer()
+local function getRoot()
+    return plr.Character and plr.Character:FindFirstChild("HumanoidRootPart")
 end
 
-local function buyUpgrade(upgrade)
-    game:GetService("ReplicatedStorage").Events.BuyUpgrade:FireServer(upgrade)
+local function getHumanoid()
+    return plr.Character and plr.Character:FindFirstChildOfClass("Humanoid")
 end
 
-local function activateBoost(boostName)
-    game:GetService("ReplicatedStorage").Events.ActivateBoost:FireServer(boostName)
-end
-
-local function sell()
-    game:GetService("ReplicatedStorage").Events.Sell:FireServer()
-end
-
-local function collectOrbs()
-    for _, orb in pairs(workspace:GetDescendants()) do
-        if orb:IsA("Part") and orb.Name == "Orb" then
-            game:GetService("ReplicatedStorage").Events.CollectOrb:FireServer(orb)
+-- Auto loops
+spawn(function()
+    while true do
+        wait(0.4 + math.random(0.1, 0.6))  -- jitter to look less bot-like
+        
+        if autoTrain and remotes.Train then
+            safeFire(remotes.Train, "Strength")  -- change to "Agility", "Durability" etc. if needed
+        end
+        
+        if autoSell and remotes.Sell then
+            safeFire(remotes.Sell)
         end
     end
-end
+end)
 
-local function teleportTo(position)
-    local player = game.Players.LocalPlayer
-    if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-        player.Character.HumanoidRootPart.CFrame = CFrame.new(position)
+spawn(function()
+    while true do
+        wait(45 + math.random(10, 30))
+        if autoRebirth and remotes.Rebirth then
+            -- Optional: check strength > some value before rebirth
+            safeFire(remotes.Rebirth)
+        end
     end
-end
+end)
 
-local function autoEquipBestGear()
-    game:GetService("ReplicatedStorage").Events.EquipBestGear:FireServer()
-end
-
-local function autoOpenEgg()
-    game:GetService("ReplicatedStorage").Events.OpenEgg:FireServer()
-end
-
-local function claimDailyReward()
-    game:GetService("ReplicatedStorage").Events.ClaimDailyReward:FireServer()
-end
-
-local function joinBestServer()
-    game:GetService("ReplicatedStorage").Events.JoinBestServer:FireServer()
-end
-
-local function upgradeAll()
-    for level = 1, maxUpgradeLevel do
-        game:GetService("ReplicatedStorage").Events.UpgradeAll:FireServer(level)
-        wait(0.5)
-    end
-end
-
-local function infiniteJumpFunc()
-    game:GetService("UserInputService").JumpRequest:Connect(function()
-        if infiniteJump then
-            local humanoid = game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
-            if humanoid then
-                humanoid:ChangeState("Jump")
+-- Infinite Jump
+local infJumpConn
+local function setupInfJump()
+    if infJumpConn then infJumpConn:Disconnect() end
+    if infiniteJump then
+        infJumpConn = UIS.JumpRequest:Connect(function()
+            local hum = getHumanoid()
+            if hum then
+                hum:ChangeState("Jumping")
             end
-        end
-    end)
+        end)
+    end
 end
 
--- UI Tabs
-local Main = Window:CreateTab("Main")
-local TeleportTab = Window:CreateTab("Teleport")
-local Player = Window:CreateTab("Player")
-local Utility = Window:CreateTab("Utility")
-local Misc = Window:CreateTab("Misc")
+-- UI
+local Main = Window:CreateTab("Main Farm")
+local PlayerTab = Window:CreateTab("Player")
+local MiscTab = Window:CreateTab("Misc")
 
 -- Main Tab
-local trainSection = Main:CreateSection("Auto Train Stats")
-local stats = {"Strength", "Speed", "Stamina", "Defense", "Health"}
-for _, stat in ipairs(stats) do
-    trainSection:CreateToggle({
-        Name = "Auto Train " .. stat,
-        Callback = function(val)
-            autoTrainStats = val
-            if val then
-                spawn(function()
-                    while autoTrainStats do
-                        trainStat(stat)
-                        wait(0.5)
-                    end
-                end)
-            end
-        end,
-    })
-end
+Main:CreateSection("Auto Farm")
 
-local rebirthSection = Main:CreateSection("Auto Rebirth")
-local autoRebirthToggle = rebirthSection:CreateToggle({
-    Name = "Enable Auto Rebirth",
-    Callback = function(val)
-        autoRebirth = val
-        spawn(function()
-            while autoRebirth do
-                rebirth()
-                wait(60)
-            end
-        end)
-    end,
+Main:CreateToggle({
+    Name = "Auto Train (Strength)",
+    CurrentValue = false,
+    Callback = function(v)
+        autoTrain = v
+    end
 })
 
-local upgradeSection = Main:CreateSection("Auto Buy Upgrades")
-local upgrades = {"StrengthUpgrade", "SpeedUpgrade", "StaminaUpgrade", "DefenseUpgrade"}
-for _, upgrade in ipairs(upgrades) do
-    upgradeSection:CreateToggle({
-        Name = "Auto Buy " .. upgrade,
-        Callback = function(val)
-            autoBuyUpgrades = val
-            spawn(function()
-                while autoBuyUpgrades do
-                    buyUpgrade(upgrade)
-                    wait(2)
-                end
-            end)
-        end,
-    })
-end
+Main:CreateToggle({
+    Name = "Auto Rebirth",
+    CurrentValue = false,
+    Callback = function(v)
+        autoRebirth = v
+    end
+})
 
-local boostSection = Main:CreateSection("Auto Boosts")
-local boosts = {"X2Damage", "X2Coins", "X2Rebirths"}
-for _, boost in ipairs(boosts) do
-    boostSection:CreateToggle({
-        Name = "Activate " .. boost,
-        Callback = function(val)
-            autoBoost = val
-            spawn(function()
-                while autoBoost do
-                    activateBoost(boost)
-                    wait(300)
-                end
-            end)
-        end,
-    })
-end
-
-local sellOrbSection = Main:CreateSection("Auto Sell & Collect")
-local autoSellToggle = sellOrbSection:CreateToggle({
+Main:CreateToggle({
     Name = "Auto Sell",
-    Callback = function(val)
-        autoSell = val
-        spawn(function()
-            while autoSell do
-                sell()
-                wait(60)
-            end
-        end)
-    end,
-})
-local autoCollectToggle = sellOrbSection:CreateToggle({
-    Name = "Auto Collect Orbs",
-    Callback = function(val)
-        autoCollectOrbs = val
-        spawn(function()
-            while autoCollectOrbs do
-                collectOrbs()
-                wait(5)
-            end
-        end)
-    end,
-})
-
--- Teleport Tab
-local teleportSection = TeleportTab:CreateSection("Teleport Locations")
-local presetLocations = {
-    {name="Spawn", pos=Vector3.new(0, 10, 0)},
-    {name="Gym", pos=Vector3.new(100, 10, 0)},
-    {name="Shop", pos=Vector3.new(200, 10, 0)},
-}
-for _, loc in ipairs(presetLocations) do
-    teleportSection:CreateButton({
-        Name = loc.name,
-        Callback = function()
-            teleportTo(loc.pos)
-        end,
-    })
-end
-local customTeleportSection = TeleportTab:CreateSection("Custom Coordinates")
-local X = customTeleportSection:CreateInput({Name="X", PlaceholderText="X coordinate"})
-local Y = customTeleportSection:CreateInput({Name="Y", PlaceholderText="Y coordinate"})
-local Z = customTeleportSection:CreateInput({Name="Z", PlaceholderText="Z coordinate"})
-customTeleportSection:CreateButton({
-    Name="Teleport",
-    Callback=function()
-        local x=tonumber(X:GetText())
-        local y=tonumber(Y:GetText())
-        local z=tonumber(Z:GetText())
-        if x and y and z then
-            teleportTo(Vector3.new(x,y,z))
-        end
-    end,
+    CurrentValue = false,
+    Callback = function(v)
+        autoSell = v
+    end
 })
 
 -- Player Tab
-local speedSlider = Player:CreateSlider({
-    Name="Walk Speed",
-    Min=16,
-    Max=200,
-    Default=16,
-    Callback=function(val)
-        if game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character:FindFirstChild("Humanoid") then
-            game.Players.LocalPlayer.Character.Humanoid.WalkSpeed=val
-        end
-    end,
-})
-local jumpSlider = Player:CreateSlider({
-    Name="Jump Power",
-    Min=50,
-    Max=300,
-    Default=50,
-    Callback=function(val)
-        if game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character:FindFirstChild("Humanoid") then
-            game.Players.LocalPlayer.Character.Humanoid.JumpPower=val
-        end
-    end,
-})
-local infiniteJumpToggle = Player:CreateToggle({
-    Name="Infinite Jump",
-    Callback=function(val)
-        infiniteJump=val
-        if val then
-            infiniteJumpFunc()
-        end
-    end,
+PlayerTab:CreateSection("Movement")
+
+PlayerTab:CreateSlider({
+    Name = "Walk Speed",
+    Range = {16, 300},
+    Increment = 4,
+    Suffix = "Speed",
+    CurrentValue = 16,
+    Callback = function(v)
+        walkSpeed = v
+        local hum = getHumanoid()
+        if hum then hum.WalkSpeed = v end
+    end
 })
 
--- Utility Tab
-local miscSection = Utility:CreateSection("Miscellaneous")
-miscSection:CreateToggle({
-    Name="Anti AFK",
-    Callback=function(val)
-        if val then
-            local vu=game:GetService("VirtualUser")
-            game:GetService("Players").LocalPlayer.Idled:Connect(function()
-                vu:CaptureController()
-                vu:ClickButton2(Vector2.new(0,0))
-            end)
-        end
-    end,
+PlayerTab:CreateSlider({
+    Name = "Jump Power",
+    Range = {50, 400},
+    Increment = 10,
+    Suffix = "Power",
+    CurrentValue = 50,
+    Callback = function(v)
+        jumpPower = v
+        local hum = getHumanoid()
+        if hum then hum.JumpPower = v end
+    end
 })
 
-local autoJoinServerToggle = Utility:CreateToggle({
-    Name="Auto Join Best Server",
-    Callback=function(val)
-        autoJoinServer=val
-        spawn(function()
-            while autoJoinServer do
-                joinBestServer()
-                wait(300)
-            end
-        end)
-    end,
-})
-
-local autoClaimDailyToggle = Utility:CreateToggle({
-    Name="Auto Claim Daily Reward",
-    Callback=function(val)
-        autoClaimDaily=val
-        spawn(function()
-            while autoClaimDaily do
-                claimDailyReward()
-                wait(86400) -- 24 hours
-            end
-        end)
-    end,
-})
-
-local autoUpgradeAllToggle = Utility:CreateToggle({
-    Name="Auto Upgrade All",
-    Callback=function(val)
-        autoUpgradeAll=val
-        spawn(function()
-            while autoUpgradeAll do
-                upgradeAll()
-                wait(60)
-            end
-        end)
-    end,
-})
-local maxLevelInput = Utility:CreateInput({
-    PlaceholderText="Max Upgrade Level",
-    Text="10",
-    Callback=function(text)
-        maxUpgradeLevel=tonumber(text) or 10
-    end,
+PlayerTab:CreateToggle({
+    Name = "Infinite Jump",
+    CurrentValue = false,
+    Callback = function(v)
+        infiniteJump = v
+        setupInfJump()
+    end
 })
 
 -- Misc Tab
-local autoEquipToggle = Misc:CreateToggle({
-    Name="Auto Equip Best Gear",
-    Callback=function(val)
-        autoEquipBest=val
-        if val then
-            spawn(function()
-                while autoEquipBest do
-                    autoEquipBestGear()
-                    wait(10)
+MiscTab:CreateSection("Utility")
+
+MiscTab:CreateToggle({
+    Name = "Anti-AFK",
+    CurrentValue = false,
+    Callback = function(v)
+        antiAFK = v
+        if v then
+            local vu = game:GetService("VirtualUser")
+            plr.Idled:Connect(function()
+                if antiAFK then
+                    vu:CaptureController()
+                    vu:ClickButton2(Vector2.new())
                 end
             end)
         end
-    end,
-})
-local autoOpenEggsToggle = Misc:CreateToggle({
-    Name="Auto Open Eggs",
-    Callback=function(val)
-        autoOpenEggs=val
-        if val then
-            spawn(function()
-                while autoOpenEggs do
-                    autoOpenEgg()
-                    wait(2)
-                end
-            end)
-        end
-    end,
+    end
 })
 
-local autoResetRejoinToggle = Misc:CreateToggle({
-    Name="Auto Reset & Rejoin",
-    Callback=function(val)
-        if val then
-            spawn(function()
-                while true do
-                    game:GetService("TeleportService"):Teleport(game.PlaceId)
-                    wait(300)
-                end
-            end)
-        end
-    end,
-})
+-- Character added (respawn / speed & jump reset)
+plr.CharacterAdded:Connect(function(char)
+    wait(0.5)
+    local hum = char:WaitForChild("Humanoid", 5)
+    if hum then
+        hum.WalkSpeed = walkSpeed
+        hum.JumpPower = jumpPower
+    end
+end)
 
--- Initialize Infinite Jump
-infiniteJumpFunc()
+-- Initial setup
+setupInfJump()
+if plr.Character then
+    local hum = getHumanoid()
+    if hum then
+        hum.WalkSpeed = walkSpeed
+        hum.JumpPower = jumpPower
+    end
+end
 
 Rayfield:LoadConfiguration()
+Rayfield:Notify({
+    Title = "Script Loaded",
+    Content = "Update remote names yourself - most are probably different now.",
+    Duration = 6
+})
