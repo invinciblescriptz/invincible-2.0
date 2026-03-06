@@ -1,139 +1,364 @@
 local Rayfield = loadstring(game:HttpGet('https://raw.githubusercontent.com/shlexware/Rayfield/main/source'))()
 local Window = Rayfield:CreateWindow({
-    Name = "Muscle Legends Advanced Script",
-    LoadingTitle = "Loading Advanced Features",
-    LoadingSubtitle = "Enhance Your Gameplay!",
+    Name = "Muscle Legends Mega Script",
+    LoadingTitle = "Loading...",
+    LoadingSubtitle = "All-in-One Automation & Utility",
     ConfigurationSaving = true,
-    ConfigurationFolder = "MuscleLegendsAdvanced",
+    ConfigurationFolder = "MuscleLegendsMega",
 })
 
 -- Variables
-local autoTrain = false
-local autoCollectOrbs = false
+local autoTrainStats = false
 local autoRebirth = false
+local autoBuyUpgrades = false
+local autoBoost = false
+local autoSell = false
+local autoCollectOrbs = false
+local infiniteJump = false
+local autoEquipBest = false
+local autoOpenEggs = false
+local autoClaimDaily = false
+local autoJoinServer = false
+local autoUpgradeAll = false
+local maxUpgradeLevel = 10
 
 -- Functions
-local function train()
-    -- Replace with actual remote event and arguments for training
-    game:GetService("ReplicatedStorage").Events.Train:FireServer("Muscle")
+local function trainStat(stat)
+    game:GetService("ReplicatedStorage").Events.TrainStat:FireServer(stat)
+end
+
+local function rebirth()
+    game:GetService("ReplicatedStorage").Events.Rebirth:FireServer()
+end
+
+local function buyUpgrade(upgrade)
+    game:GetService("ReplicatedStorage").Events.BuyUpgrade:FireServer(upgrade)
+end
+
+local function activateBoost(boostName)
+    game:GetService("ReplicatedStorage").Events.ActivateBoost:FireServer(boostName)
+end
+
+local function sell()
+    game:GetService("ReplicatedStorage").Events.Sell:FireServer()
 end
 
 local function collectOrbs()
-    -- Replace with actual code to find and collect orbs
-    -- Example: Iterate through all orbs in workspace and collect
-    for i, orb in pairs(workspace:GetDescendants()) do
+    for _, orb in pairs(workspace:GetDescendants()) do
         if orb:IsA("Part") and orb.Name == "Orb" then
             game:GetService("ReplicatedStorage").Events.CollectOrb:FireServer(orb)
         end
     end
 end
 
-local function rebirth()
-    -- Replace with actual remote event and arguments for rebirth
-    game:GetService("ReplicatedStorage").Events.Rebirth:FireServer()
+local function teleportTo(position)
+    if game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+        game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(position)
+    end
 end
 
--- Tabs
+local function autoEquipBestGear()
+    game:GetService("ReplicatedStorage").Events.EquipBestGear:FireServer()
+end
+
+local function autoOpenEgg()
+    game:GetService("ReplicatedStorage").Events.OpenEgg:FireServer()
+end
+
+local function claimDailyReward()
+    game:GetService("ReplicatedStorage").Events.ClaimDailyReward:FireServer()
+end
+
+local function joinBestServer()
+    game:GetService("ReplicatedStorage").Events.JoinBestServer:FireServer()
+end
+
+local function upgradeAll()
+    for level = 1, maxUpgradeLevel do
+        game:GetService("ReplicatedStorage").Events.UpgradeAll:FireServer(level)
+        wait(0.5)
+    end
+end
+
+local function infiniteJumpFunc()
+    game:GetService("UserInputService").JumpRequest:Connect(function()
+        if infiniteJump then
+            game.Players.LocalPlayer.Character.Humanoid:ChangeState("Jump")
+        end
+    end)
+end
+
+-- UI Tabs
 local Main = Window:CreateTab("Main")
 local TeleportTab = Window:CreateTab("Teleport")
+local Player = Window:CreateTab("Player")
+local Utility = Window:CreateTab("Utility")
+local Misc = Window:CreateTab("Misc")
 
--- Main Tab Features
-local trainSection = Main:CreateSection("Auto Training")
-local AutoTrainButton = trainSection:CreateButton({
-    Name = "Toggle Auto Train",
-    Callback = function()
-        autoTrain = not autoTrain
-        while autoTrain do
-            train()
-            wait(1)
-        end
-    end,
-})
-
-local orbsSection = Main:CreateSection("Auto Collect Orbs")
-local AutoCollectOrbsButton = orbsSection:CreateButton({
-    Name = "Toggle Auto Collect Orbs",
-    Callback = function()
-        autoCollectOrbs = not autoCollectOrbs
-        while autoCollectOrbs do
-            collectOrbs()
-            wait(5) -- Adjust wait time as needed
-        end
-    end,
-})
+-- Main Tab
+local trainSection = Main:CreateSection("Auto Train Stats")
+local stats = {"Strength", "Speed", "Stamina", "Defense", "Health"}
+for _, stat in ipairs(stats) do
+    trainSection:CreateToggle({
+        Name = "Auto Train " .. stat,
+        Callback = function(val)
+            autoTrainStats = val
+            if val then
+                spawn(function()
+                    while autoTrainStats do
+                        trainStat(stat)
+                        wait(0.5)
+                    end
+                end)
+            end
+        end,
+    })
+end
 
 local rebirthSection = Main:CreateSection("Auto Rebirth")
-local AutoRebirthButton = rebirthSection:CreateButton({
-    Name = "Toggle Auto Rebirth",
-    Callback = function()
-        autoRebirth = not autoRebirth
-        while autoRebirth do
-            rebirth()
-            wait(60) -- Adjust wait time as needed
-        end
+local autoRebirthToggle = rebirthSection:CreateToggle({
+    Name = "Enable Auto Rebirth",
+    Callback = function(val)
+        autoRebirth = val
+        spawn(function()
+            while autoRebirth do
+                rebirth()
+                wait(60)
+            end
+        end)
     end,
 })
 
--- Teleport Tab Features
-local teleportSection = TeleportTab:CreateSection("Teleportation")
-local ZoneDropdown = teleportSection:CreateDropdown({
-    Name = "Select Zone",
-    Options = {"Zone1", "Zone2", "Zone3"}, -- Replace with actual zone names
-    Callback = function(option)
-        -- Implement teleportation logic here
-        if option == "Zone1" then
-            -- Teleport to Zone1
-            game.Players.LocalPlayer.Character:MoveTo(Vector3.new(0, 0, 0)) -- Replace with actual coordinates
-        elseif option == "Zone2" then
-            -- Teleport to Zone2
-            game.Players.LocalPlayer.Character:MoveTo(Vector3.new(100, 0, 100)) -- Replace with actual coordinates
-        elseif option == "Zone3" then
-            -- Teleport to Zone3
-            game.Players.LocalPlayer.Character:MoveTo(Vector3.new(200, 0, 200)) -- Replace with actual coordinates
-        end
+local upgradeSection = Main:CreateSection("Auto Buy Upgrades")
+local upgrades = {"StrengthUpgrade", "SpeedUpgrade", "StaminaUpgrade", "DefenseUpgrade"}
+for _, upgrade in ipairs(upgrades) do
+    upgradeSection:CreateToggle({
+        Name = "Auto Buy " .. upgrade,
+        Callback = function(val)
+            autoBuyUpgrades = val
+            spawn(function()
+                while autoBuyUpgrades do
+                    buyUpgrade(upgrade)
+                    wait(2)
+                end
+            end)
+        end,
+    })
+end
+
+local boostSection = Main:CreateSection("Auto Boosts")
+local boosts = {"X2Damage", "X2Coins", "X2Rebirths"}
+for _, boost in ipairs(boosts) do
+    boostSection:CreateToggle({
+        Name = "Activate " .. boost,
+        Callback = function(val)
+            autoBoost = val
+            spawn(function()
+                while autoBoost do
+                    activateBoost(boost)
+                    wait(300)
+                end
+            end)
+        end,
+    })
+end
+
+local sellOrbSection = Main:CreateSection("Auto Sell & Collect")
+local autoSellToggle = sellOrbSection:CreateToggle({
+    Name = "Auto Sell",
+    Callback = function(val)
+        autoSell = val
+        spawn(function()
+            while autoSell do
+                sell()
+                wait(60)
+            end
+        end)
+    end,
+})
+local autoCollectToggle = sellOrbSection:CreateToggle({
+    Name = "Auto Collect Orbs",
+    Callback = function(val)
+        autoCollectOrbs = val
+        spawn(function()
+            while autoCollectOrbs do
+                collectOrbs()
+                wait(5)
+            end
+        end)
     end,
 })
 
--- Add more teleport locations
-local customTeleportSection = TeleportTab:CreateSection("Custom Teleport")
-local XInput = customTeleportSection:CreateInput({
-    Name = "X Coordinate",
-    PlaceholderText = "Enter X Coordinate",
-})
-local YInput = customTeleportSection:CreateInput({
-    Name = "Y Coordinate",
-    PlaceholderText = "Enter Y Coordinate",
-})
-local ZInput = customTeleportSection:CreateInput({
-    Name = "Z Coordinate",
-    PlaceholderText = "Enter Z Coordinate",
-})
-local TeleportButton = customTeleportSection:CreateButton({
-    Name = "Teleport to Custom Coordinates",
-    Callback = function()
-        local x = tonumber(XInput:GetText())
-        local y = tonumber(YInput:GetText())
-        local z = tonumber(ZInput:GetText())
+-- Teleport Tab
+local teleportSection = TeleportTab:CreateSection("Teleport Locations")
+local presetLocations = {
+    {name="Spawn", pos=Vector3.new(0, 10, 0)},
+    {name="Gym", pos=Vector3.new(100, 10, 0)},
+    {name="Shop", pos=Vector3.new(200, 10, 0)},
+}
+for _, loc in ipairs(presetLocations) do
+    teleportSection:CreateButton({
+        Name = loc.name,
+        Callback = function()
+            teleportTo(loc.pos)
+        end,
+    })
+end
+local customTeleportSection = TeleportTab:CreateSection("Custom Coordinates")
+local X = customTeleportSection:CreateInput({Name="X", PlaceholderText="X coordinate"})
+local Y = customTeleportSection:CreateInput({Name="Y", PlaceholderText="Y coordinate"})
+local Z = customTeleportSection:CreateInput({Name="Z", PlaceholderText="Z coordinate"})
+customTeleportSection:CreateButton({
+    Name="Teleport",
+    Callback=function()
+        local x=tonumber(X:GetText())
+        local y=tonumber(Y:GetText())
+        local z=tonumber(Z:GetText())
         if x and y and z then
-            game.Players.LocalPlayer.Character:MoveTo(Vector3.new(x, y, z))
-        else
-            print("Invalid coordinates")
+            teleportTo(Vector3.new(x,y,z))
         end
     end,
 })
 
--- Additional Features
-local MiscTab = Window:CreateTab("Misc")
-local miscSection = MiscTab:CreateSection("Misc Settings")
-local SpeedSlider = miscSection:CreateSlider({
-    Name = "Walk Speed",
-    Min = 16,
-    Max = 100,
-    Default = 16,
-    ValueName = "Speed",
-    Callback = function(value)
-        game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = value
+-- Player Tab
+local speedSlider = Player:CreateSlider({
+    Name="Walk Speed",
+    Min=16,
+    Max=200,
+    Default=16,
+    Callback=function(val)
+        if game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character:FindFirstChild("Humanoid") then
+            game.Players.LocalPlayer.Character.Humanoid.WalkSpeed=val
+        end
     end,
 })
+local jumpSlider = Player:CreateSlider({
+    Name="Jump Power",
+    Min=50,
+    Max=300,
+    Default=50,
+    Callback=function(val)
+        if game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character:FindFirstChild("Humanoid") then
+            game.Players.LocalPlayer.Character.Humanoid.JumpPower=val
+        end
+    end,
+})
+local infiniteJumpToggle = Player:CreateToggle({
+    Name="Infinite Jump",
+    Callback=function(val)
+        infiniteJump=val
+        if val then
+            infiniteJumpFunc()
+        end
+    end,
+})
+
+-- Utility Tab
+local miscSection = Utility:CreateSection("Miscellaneous")
+miscSection:CreateToggle({
+    Name="Anti AFK",
+    Callback=function(val)
+        if val then
+            local vu=game:GetService("VirtualUser")
+            game:GetService("Players").LocalPlayer.Idled:Connect(function()
+                vu:CaptureController()
+                vu:ClickButton2(Vector2.new(0,0))
+            end)
+        end
+    end,
+})
+
+local autoJoinServerToggle = Utility:CreateToggle({
+    Name="Auto Join Best Server",
+    Callback=function(val)
+        autoJoinServer=val
+        spawn(function()
+            while autoJoinServer do
+                joinBestServer()
+                wait(300)
+            end
+        end)
+    end,
+})
+
+local autoClaimDailyToggle = Utility:CreateToggle({
+    Name="Auto Claim Daily Reward",
+    Callback=function(val)
+        autoClaimDaily=val
+        spawn(function()
+            while autoClaimDaily do
+                claimDailyReward()
+                wait(86400) -- 24 hours
+            end
+        end)
+    end,
+})
+
+local autoUpgradeAllToggle = Utility:CreateToggle({
+    Name="Auto Upgrade All",
+    Callback=function(val)
+        autoUpgradeAll=val
+        spawn(function()
+            while autoUpgradeAll do
+                upgradeAll()
+                wait(60)
+            end
+        end)
+    end,
+})
+local maxLevelInput = Utility:CreateInput({
+    PlaceholderText="Max Upgrade Level",
+    Text="10",
+    Callback=function(text)
+        maxUpgradeLevel=tonumber(text) or 10
+    end,
+})
+
+-- Misc Tab
+local autoEquipToggle = Misc:CreateToggle({
+    Name="Auto Equip Best Gear",
+    Callback=function(val)
+        autoEquipBest=val
+        if val then
+            spawn(function()
+                while autoEquipBest do
+                    autoEquipBestGear()
+                    wait(10)
+                end
+            end)
+        end
+    end,
+})
+local autoOpenEggsToggle = Misc:CreateToggle({
+    Name="Auto Open Eggs",
+    Callback=function(val)
+        autoOpenEggs=val
+        if val then
+            spawn(function()
+                while autoOpenEggs do
+                    autoOpenEgg()
+                    wait(2)
+                end
+            end)
+        end
+    end,
+})
+
+local autoResetRejoinToggle = Misc:CreateToggle({
+    Name="Auto Reset & Rejoin",
+    Callback=function(val)
+        if val then
+            spawn(function()
+                while true do
+                    game:GetService("TeleportService"):Teleport(game.PlaceId)
+                    wait(300)
+                end
+            end)
+        end
+    end,
+})
+
+-- Infinite Jump
+infiniteJumpFunc()
 
 Rayfield:LoadConfiguration()
